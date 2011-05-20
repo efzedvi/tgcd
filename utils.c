@@ -82,6 +82,7 @@ void close_log(void)
 #ifdef DEBUG
 	if (logfile)
 		fclose(logfile);
+	logfile = NULL;
 #endif
 }
 

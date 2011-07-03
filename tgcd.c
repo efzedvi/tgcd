@@ -86,13 +86,13 @@ void print_usage(int exit_code)
 	printf(" ListenListen mode: %s -L -p port  -q port  [-k n ] [ common options ...]\n", PACKAGE);
 	printf(" -L, --llnode		    Become a LL (ListenListen) node.\n");
 	printf(" -q, --llport number 	    The port to listen on for incomming connection from a CC node\n");
-	printf(" -p, --port number 	    The port to listen of for incomming actual client connection\n");
+	printf(" -p, --port number 	    The port to listen on for incomming actual client connection\n");
 	printf(" -k, --key number 	    Poorman's encryption (0-255, default: 0, means no encryption)\n");
 	
 	printf("\n");
 	printf(" PortForwarder mode: %s -F -p port -s host:port [ common options ... ]\n", PACKAGE);
 	printf(" -F, --lcnode		    Become a ListenConnect node, i.e. just a simple port forwarder\n");
-	printf(" -p, --port  number 	    The port to listen of for incomming actual client connection\n");
+	printf(" -p, --port  number 	    The port to listen on for incomming actual client connection\n");
 	printf(" -s, --server host:port     The host and port of the actual server or a LL node\n");
 
 	printf("\n");

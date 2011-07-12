@@ -90,14 +90,14 @@ void close_log(void)
   Writes a log message to the log file, and on the stderr if not daemon
 ------------------------------------------------------------------*/
 #ifdef __STDC__
-void print_log(int dlevel, char *format_str, ...)
+void print_log(int dlevel, const char *format_str, ...)
 {
 #else
 void print_log(va_alist)
 va_dcl
 {
  	int  dlevel;
-	char *format_str;
+	const char *format_str;
 #endif
 #ifdef DEBUG
 	char log_msg[256];
@@ -149,7 +149,7 @@ va_dcl
   Writes a log message to the log file, and on the stderr if not daemon
 ------------------------------------------------------------------*/
 #ifdef __STDC__
-void print_log_msg(int dlevel, const char *func, char *format_str, ...)
+void print_log_msg(int dlevel, const char *func, const char *format_str, ...)
 {
 #else
 void print_log_msg(va_alist)

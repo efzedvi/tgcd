@@ -54,13 +54,13 @@ void init_log(int dlevel, char *dbg_filename, int daemon);
 void close_log(void);
 
 #ifdef __STDC__
-void print_log(int dlevel, char *format_str, ...);
+void print_log(int dlevel, const char *format_str, ...);
 #else
 void print_log(va_alist);
 #endif
 
 #ifdef __STDC__
-void print_log_msg(int dlevel, const char *func, char *format_str, ...);
+void print_log_msg(int dlevel, const char *func, const char *format_str, ...);
 #else
 void print_log_msg(va_alist);
 #endif

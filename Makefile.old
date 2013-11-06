@@ -1,6 +1,6 @@
 #----- Project dependent macros -----
 
-VERSION = 0.99
+VERSION = 1.0.1
 INSTALL_ROOT=.
 DEBUG_FLAG = -g
 TARGET = tgcd

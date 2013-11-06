@@ -1,5 +1,5 @@
 /* tgcd.c is part of tgc package.
-   Copyright (C) 2008	Faraz.V (faraz@fzv.ca)
+   Copyright (C) 2013	Faraz.V (faraz@fzv.ca)
   
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -61,7 +61,7 @@ TGC	tgc;
 --------------------------------------------------------------------------------*/
 void print_version(void)
 {
-	printf("TCP Gender Changer, V%s Copyright (C) 2008 Faraz.V (faraz@fzv.ca)\n", VERSION);
+	printf("TCP Gender Changer, V%s Copyright (C) 2013 Faraz.V (faraz@fzv.ca)\n", VERSION);
 }
 
 /*------------------------------------------------------------------------------
@@ -155,7 +155,8 @@ int main(int argc,char *argv[])
 	extern  int  optind;	/* getopt */
 	char	logfilename[MAX_PATH+1] = {0};
 	char	temp[MAX_PATH] = {0};
-	int	ntemp=0;
+	int	ntemp=0, rc=0;
+	struct stat filter_stat;
 	
 	/* short options */
 	const char *short_options = "Cs:c:i:Lq:p:Fk:m:l:g:nhv";
@@ -239,6 +240,10 @@ int main(int argc,char *argv[])
 				break;
 			case 'f':
 				strncpy( tgc.filter, optarg, MAX_PATH);
+				rc = stat(tgc.filter, &filter_stat);
+				if (rc || !S_ISREG(filter_stat.st_mode)) {
+					memset(tgc.filter, 0, MAX_PATH+1);
+				}
 				break;
 			case 'm':
 				strncpy( &(tgc.method), optarg, 1);

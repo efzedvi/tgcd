@@ -6,3 +6,5 @@ stamp-h
 tgcd
 Makefile
 config.h
+autom4te.cache/
+config.h.in~

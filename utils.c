@@ -1,5 +1,5 @@
 /* utils.c is part of tgc package. 
-   Copyright (C) 2008	Faraz.V (faraz@fzv.ca)
+   Copyright (C) 2013	Faraz.V (faraz@fzv.ca)
   
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

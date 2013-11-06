@@ -1,5 +1,5 @@
 /* utils.c is part of tgc package. 
-   Copyright (C) 2008	Faraz.V (faraz@lavabit.com)
+   Copyright (C) 2008	Faraz.V (faraz@fzv.ca)
   
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -514,11 +514,7 @@ int accept_connection(int sd_accept, struct sockaddr_in *addr, socklen_t *in_add
 
 #ifdef HAVE_LIBWRAP
 	if (sd>0 && !peer_ok(PACKAGE, sd)) {
-#ifdef HAVE_INET_NTOA
 		PRINT_LOG(2, "Rejecting %s!", inet_ntoa(addr->sin_addr));
-#else
-		PRINT_LOG(2, "Rejecting incoming connection");
-#endif
 		close(sd);
 		sd = -1;
 	}

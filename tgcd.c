@@ -1,5 +1,5 @@
 /* tgcd.c is part of tgc package.
-   Copyright (C) 2008	Faraz.V (faraz@lavabit.com)
+   Copyright (C) 2008	Faraz.V (faraz@fzv.ca)
   
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -61,7 +61,7 @@ TGC	tgc;
 --------------------------------------------------------------------------------*/
 void print_version(void)
 {
-	printf("TCP Gender Changer, V%s Copyright (C) 2008 Faraz.V (faraz@lavabit.com)\n", VERSION);
+	printf("TCP Gender Changer, V%s Copyright (C) 2008 Faraz.V (faraz@fzv.ca)\n", VERSION);
 }
 
 /*------------------------------------------------------------------------------
@@ -98,6 +98,7 @@ void print_usage(int exit_code)
 	printf("\n");
 	printf("Common options:\n");
         printf(" -m, --method { f | s }	    f: Fork  s: Select (default: s)\n");
+        printf(" -f, --filter filter	    Optional argument to run filter on new connections, IP passed as argument\n");
         printf(" -l, --log file 	    Write logs to file. (default:'%s')\n", TGC_DEFAULT_LOGFILE);
 	printf(" -g, --level number 	    Log level detail (default:%d).\n", TGC_DEFAULT_LOGLEVEL);
 	printf(" -n, --nodaemon             Do not become daemon\n");
@@ -175,6 +176,7 @@ int main(int argc,char *argv[])
 		{"key",		1, NULL, 'k'},
 
 		{"method",	1, NULL, 'm'},
+		{"filter",	1, NULL, 'f'},
 
 		{"log",		1, NULL, 'l'},
 		{"level",	1, NULL, 'g'},
@@ -234,6 +236,9 @@ int main(int argc,char *argv[])
 				break;
 			case 'l':
 				strncpy(logfilename, optarg, MAX_PATH);		
+				break;
+			case 'f':
+				strncpy( tgc.filter, optarg, MAX_PATH);
 				break;
 			case 'm':
 				strncpy( &(tgc.method), optarg, 1);

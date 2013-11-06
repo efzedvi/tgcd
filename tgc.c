@@ -1,5 +1,5 @@
 /* tgc.c is part of tgc package
-   Copyright (C) 2008	Faraz.V (faraz@lavabit.com)
+   Copyright (C) 2008	Faraz.V (faraz@fzv.ca)
   
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -351,6 +351,37 @@ int tgc_pump(int sdi, int sdx, unsigned char *buf, unsigned char key)
 }
 
 /*-----------------------------------------------------------------------------
+ * Check Filter
+------------------------------------------------------------------------------*/
+int tgc_check_filter(TGC *tgc, const char *ip)
+{
+	int	ec=0;
+	char 	cmd[MAX_PATH + 1];
+
+	if (!tgc || !ip) 
+		return 0;
+	if (!strlen(tgc->filter))
+		return 1;
+	// run the filter
+	PRINT_LOG(3, "Received a client from %s", ip);
+	snprintf(cmd, MAX_PATH, "%s %s", tgc->filter, ip);
+	ec = system(cmd);
+	if (ec == -1) {
+		PRINT_LOG(1, "filter %s failed", cmd);
+		return 0;
+	} else {
+		ec >>= 8;
+		if (ec) { //filter return false
+			PRINT_LOG(3, "filter %s rejected", cmd);
+			return 0; //filter return false
+		}
+		// we are here, which means filter returned true
+		PRINT_LOG(3, "filter %s permited", cmd);
+	}
+	return 1;
+}
+
+/*-----------------------------------------------------------------------------
  * LL node
 ------------------------------------------------------------------------------*/
 int tgc_ll(TGC *tgc)
@@ -362,6 +393,7 @@ int tgc_ll(TGC *tgc)
 	socket_pair_list	*conn, *prev_conn;
 	char		cmd;
 	struct in_addr	cc_addr = { 0 } ;
+	char		ip[16];
 
 
 	if (!tgc)
@@ -401,19 +433,21 @@ int tgc_ll(TGC *tgc)
 				PRINT_LOG(1, "Error accepting new client connection");
 				continue; //break; // exit
 			}
-			
+
 			if (tgc->node.ll.control_sd<0) { 
 				//client came in while there is no control connection, so we close it
 				PRINT_LOG(3, "rejecting client connection before control connection received ");
 				close(sdx);
 				continue;
 			}
-#ifdef HAVE_INET_NTOA
-			PRINT_LOG(3, "client (%s) connected on %d!", inet_ntoa(addr.sin_addr), tgc->node.ll.ll_port);
-#else
-			PRINT_LOG(3, "client connected on %d!", tgc->node.ll.ll_port);
-#endif
+
+			strncpy(ip, inet_ntoa(addr.sin_addr), 16);
+			PRINT_LOG(3, "client (%s) connected on %d!", ip, tgc->node.ll.ll_port);
+			// run the filter
+			if (!tgc_check_filter(tgc, ip))
+				continue;
 			PRINT_LOG(3, "Ask CC for a connection for the new client");
+
 			if (tgc_send(tgc->node.ll.control_sd, TGC_COMM_CCC)>=0) {
 				if (tgc_add_queue( &(tgc->node.ll.socketq), sdx)<0) {
 					PRINT_LOG(1, "Error adding socket to queue!");
@@ -436,11 +470,12 @@ int tgc_ll(TGC *tgc)
 				break; // exit
 			}
 
-#ifdef HAVE_INET_NTOA
-			PRINT_LOG(3, "CC connected from %s", inet_ntoa(addr.sin_addr));
-#else
-			PRINT_LOG(3, "CC connected");
-#endif
+			strncpy(ip, inet_ntoa(addr.sin_addr), 16);
+			PRINT_LOG(3, "CC connected from %s", ip);
+			// run the filter
+			if (!tgc_check_filter(tgc, ip))
+                                continue;
+
 			if (tgc->node.ll.control_sd<0) { 
 				// it's the control connection
 				tgc->node.ll.control_sd = sdi;
@@ -713,6 +748,7 @@ int tgc_pf(TGC *tgc)
 	fd_set 			rfds, reads;
 	int			sdi, sdx, rc=0;
 	socket_pair_list	*conn, *prev_conn;
+	char			ip[16];
 
 
 	signal(SIGCLD, SIG_DFL); // to avoid zombie process
@@ -746,11 +782,13 @@ int tgc_pf(TGC *tgc)
 				close(tgc->sdi_accept);
 				break; //exit
 			}
-#ifdef HAVE_INET_NTOA
-			PRINT_LOG(3, "Received a client from %s", inet_ntoa(addr.sin_addr));
-#else
-			PRINT_LOG(3, "Received a client");
-#endif
+
+			// run the filter
+			strncpy(ip, inet_ntoa(addr.sin_addr), 16);
+			PRINT_LOG(3, "Received a client from %s", ip);
+			if (!tgc_check_filter(tgc, ip))
+				continue;
+
 			if ( (sdx=connect_server(tgc->node.pf.dst_host, tgc->node.pf.dst_port))<0 ) {
 				PRINT_LOG(1, "failed connecting to %s:%d", tgc->node.pf.dst_host, tgc->node.pf.dst_port);
 				close(sdi);

@@ -1,5 +1,5 @@
 /* tgc.h is part of tgc package.
-   Copyright (C) 2008	Faraz.V (faraz@lavabit.com)
+   Copyright (C) 2008	Faraz.V (faraz@fzv.ca)
   
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -117,6 +117,7 @@ typedef struct {
 	unsigned char   	buf[TGC_BUFFER_SIZE];
 	unsigned char		key;
 	char   			method;
+	char   			filter[MAX_PATH + 1];
 } TGC;
 
 

@@ -46,6 +46,7 @@ will handle the multiple connections faster in expense of system memory.
 
 .B tgcd 
 links with libwrap (if available at build time) to provide a simple access control mechanism that's provided by hosts_access(5).
+
 Aside from libwrap support, since version 0.99 an executable can also be passed to 
 .B tgcd
 (using -f or --filter argument) to perform whether or not accept a connection. The script takes the incoming
@@ -103,6 +104,9 @@ Common options:
 .TP 30
 .I \-m, --method {f|s}     
 f: Fork  s: Select (default: s)
+.TP 30
+.I \-f, --filter filter        
+Optional argument to run filter on new connections, IP passed as argument
 .TP 30
 .I \-l, --log file
 Write logs to file. (default:'/dev/null')

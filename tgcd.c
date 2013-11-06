@@ -242,7 +242,8 @@ int main(int argc,char *argv[])
 				strncpy( tgc.filter, optarg, MAX_PATH);
 				rc = stat(tgc.filter, &filter_stat);
 				if (rc || !S_ISREG(filter_stat.st_mode)) {
-					memset(tgc.filter, 0, MAX_PATH+1);
+					fprintf(stderr, "Invalid filter '%s'\n", optarg);
+					exit(3);
 				}
 				break;
 			case 'm':

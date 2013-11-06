@@ -444,8 +444,10 @@ int tgc_ll(TGC *tgc)
 			strncpy(ip, inet_ntoa(addr.sin_addr), 16);
 			PRINT_LOG(3, "client (%s) connected on %d!", ip, tgc->node.ll.ll_port);
 			// run the filter
-			if (!tgc_check_filter(tgc, ip))
+			if (!tgc_check_filter(tgc, ip)) {
+				close(sdx);
 				continue;
+			}
 			PRINT_LOG(3, "Ask CC for a connection for the new client");
 
 			if (tgc_send(tgc->node.ll.control_sd, TGC_COMM_CCC)>=0) {
@@ -473,8 +475,11 @@ int tgc_ll(TGC *tgc)
 			strncpy(ip, inet_ntoa(addr.sin_addr), 16);
 			PRINT_LOG(3, "CC connected from %s", ip);
 			// run the filter
-			if (!tgc_check_filter(tgc, ip))
+			if (!tgc_check_filter(tgc, ip)) {
+				close(sdi);
+				sdi = -1;
                                 continue;
+			}
 
 			if (tgc->node.ll.control_sd<0) { 
 				// it's the control connection
@@ -786,8 +791,11 @@ int tgc_pf(TGC *tgc)
 			// run the filter
 			strncpy(ip, inet_ntoa(addr.sin_addr), 16);
 			PRINT_LOG(3, "Received a client from %s", ip);
-			if (!tgc_check_filter(tgc, ip))
+			if (!tgc_check_filter(tgc, ip)) {
+				close(sdi);
+				sdi = -1;
 				continue;
+			}
 
 			if ( (sdx=connect_server(tgc->node.pf.dst_host, tgc->node.pf.dst_port))<0 ) {
 				PRINT_LOG(1, "failed connecting to %s:%d", tgc->node.pf.dst_host, tgc->node.pf.dst_port);

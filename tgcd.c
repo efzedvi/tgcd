@@ -159,7 +159,7 @@ int main(int argc,char *argv[])
 	struct stat filter_stat;
 	
 	/* short options */
-	const char *short_options = "Cs:c:i:Lq:p:Fk:m:l:g:nhv";
+	const char *short_options = "Cs:c:i:Lq:p:Fk:m:f:l:g:nhv";
 	
 	/* long options */
 	const struct option long_options[] = {

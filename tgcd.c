@@ -1,5 +1,5 @@
 /* tgcd.c is part of tgc package.
-   Copyright (C) 2013	Faraz.V (faraz@fzv.ca)
+   Copyright (C) 2014	Faraz.V (faraz@fzv.ca)
   
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -61,7 +61,7 @@ TGC	tgc;
 --------------------------------------------------------------------------------*/
 void print_version(void)
 {
-	printf("TCP Gender Changer, V%s Copyright (C) 2013 Faraz.V (faraz@fzv.ca)\n", VERSION);
+	printf("TCP Gender Changer, V%s Copyright (C) 2014 Faraz.V (faraz@fzv.ca)\n", VERSION);
 }
 
 /*------------------------------------------------------------------------------

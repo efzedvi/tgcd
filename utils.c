@@ -294,7 +294,7 @@ void become_daemon(void)
 	close(1);
 	close(2);
 
-	chdir("/");
+	if (chdir("/")); // the 'if' is there to supress the unused-return-value-wanring
 #endif
 }
 

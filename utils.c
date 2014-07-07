@@ -407,7 +407,6 @@ int connect_server(char *host, int port)
         struct sockaddr_in sock;
         int    sd=0, one=1;
         struct hostent  *host_ent;
-	struct linger   ling;
 
         if ( !(host_ent = gethostbyname(host)) ) {
                 fprintf(stderr, "unknown host %s\n", host);
@@ -431,11 +430,6 @@ int connect_server(char *host, int port)
 
         setsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one));
 
-	// don't put socket in TIME_WAIT if we close
-	ling.l_onoff  = 1;
-	ling.l_linger = 0;
-	setsockopt(sd, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
-	
         return sd;
 }
 
@@ -447,7 +441,6 @@ int open_server_socket(int port)
 {
         struct sockaddr_in addr;
         int    sd=0, one=1;
-	struct linger 	ling;
         //int    in_addrlen = sizeof(addr);
 
         memset(&addr, 0, sizeof(addr));
@@ -462,11 +455,6 @@ int open_server_socket(int port)
 
         setsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one));
 	setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
-
-	// don't put socket in TIME_WAIT if we close
-	ling.l_onoff  = 1;
-	ling.l_linger = 0;
-	setsockopt(sd, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
 
         /* now we've got a socket - we need to bind it */
         if (bind(sd, (struct sockaddr * ) &addr, sizeof(addr)) < 0) {
@@ -508,7 +496,6 @@ int	peer_ok(char *prog, int sd)
 int accept_connection(int sd_accept, struct sockaddr_in *addr, socklen_t *in_addrlen)
 {
 	int sd;
-	struct linger   ling;
 
 	if (!addr || !in_addrlen)
 		return -1;
@@ -526,11 +513,6 @@ int accept_connection(int sd_accept, struct sockaddr_in *addr, socklen_t *in_add
 	}
 #endif
 
-	// don't put socket in TIME_WAIT if we close
-	ling.l_onoff  = 1;
-	ling.l_linger = 0;
-	setsockopt(sd, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
-	
 	return sd;
 }
 
@@ -540,12 +522,9 @@ int accept_connection(int sd_accept, struct sockaddr_in *addr, socklen_t *in_add
 void close_connection(int *sd)
 {
 	if (sd && *sd > 0) {
-		if (shutdown(*sd, SHUT_RDWR) == 0) {
-			close(*sd);
-			*sd = -1;
-		} else { 
-			PRINT_LOG(2, "Error shutting down socket");
-		}
+		shutdown(*sd, SHUT_RDWR);
+		close(*sd);
+		*sd = -1;
 	}
 }
 

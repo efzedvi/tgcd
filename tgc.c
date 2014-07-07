@@ -51,7 +51,6 @@ int tgc_pre_init(TGC *tgc)
 		exit(1);
 		//return E_TGC_IE;
 	}
-
 	memset(tgc, 0, sizeof(TGC));
 	
 	return 0;
@@ -250,7 +249,9 @@ void tgc_shutdown(TGC *tgc)
 {
 	socket_queue	*sq=NULL;
 	int		sd=-1;
-	
+
+	if (!tgc) return;
+
 	if (tgc->type == CCNODE) {
 		sq = tgc->node.cc.socketq;
 		sd = tgc->node.cc.control_sd;
@@ -316,7 +317,7 @@ int tgc_rxtx(int rx_sd, int tx_sd, unsigned char *buf, unsigned char key)
 	if (key)
 		for(i=0; i<nread; buf[i++]^=key);
 
-	if ( (nwritten=write(tx_sd, buf, nread)) < nread  ) {
+	if ( (nwritten=write(tx_sd, buf, nread)) < nread ) {
 		PRINT_LOG(3, "Error writing to socket");
 		return E_TGC_WRITE;
 	}
@@ -355,8 +356,8 @@ int tgc_pump(int sdi, int sdx, unsigned char *buf, unsigned char key)
 
 		if (FD_ISSET(sdx, &reads)) {
 			if ( (rc=tgc_rxtx(sdx, sdi, buf, key)) < 0 ) {
-				close_connection(&sdx);
 				close_connection(&sdi);
+				close_connection(&sdx);
 				return rc;
 			}
 		}
@@ -867,6 +868,7 @@ int tgc_pf(TGC *tgc)
 			while (conn) {
 				if (FD_ISSET(conn->sdi , &reads)) { // from client
 					if ( (rc=tgc_rxtx(conn->sdi, conn->sdx, tgc->buf, tgc->key)) < 0 ) {
+						PRINT_LOG(3, "Error reading socket, closing pair");
 						FD_CLR(conn->sdi, &rfds);
 						FD_CLR(conn->sdx, &rfds);
 						close_connection(&(conn->sdi));
@@ -874,13 +876,13 @@ int tgc_pf(TGC *tgc)
 						prev_conn = conn;
 						conn = conn->next;
 						tgc_remove_list( &(tgc->pairs), prev_conn);
-						PRINT_LOG(3, "Error reading socket, closing pair");
 						continue;
 					}
 				}
 
 				if (FD_ISSET(conn->sdx, &reads)) { // from server
 					if ( (rc=tgc_rxtx(conn->sdx, conn->sdi, tgc->buf, tgc->key)) < 0 ) {
+						PRINT_LOG(3, "Error reading socket, closing pair.");
 						FD_CLR(conn->sdi, &rfds);
 						FD_CLR(conn->sdx, &rfds);
 						close_connection(&(conn->sdi));
@@ -888,7 +890,6 @@ int tgc_pf(TGC *tgc)
 						prev_conn = conn;
 						conn=conn->next;
 						tgc_remove_list( &(tgc->pairs), prev_conn);
-						PRINT_LOG(3, "Error reading socket, closing pair.");
 						continue;
 					}
 				}

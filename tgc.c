@@ -117,22 +117,28 @@ int tgc_send(int sd, char cmd)
 		return E_TGC_NOCANDO;
 	}
 
-	return 0;
+	return E_TGC_OK;
 }
 
 /*-----------------------------------------------------------------------------
  Read internal command!
 -----------------------------------------------------------------------------*/
-int tgc_read(int sd)
+int tgc_read(int sd, char *cmd)
 {
-	char	cmd=0;
+	int rc = 0;
 
-	if (read(sd, &cmd, 1)<1) {
+	if (!cmd)
+		return E_TGC_IE;
+	
+	if ( (rc = read(sd, cmd, 1)) < 0) {
 		PRINT_LOG(3, "Failed reading command");
-		return E_TGC_NOCANDO;
+		return E_TGC_READ;
 	}
 
-	return cmd;
+	if (!rc) 
+		return E_TGC_END;
+	
+	return E_TGC_OK;
 }
 
 /*-----------------------------------------------------------------------------
@@ -157,7 +163,7 @@ int tgc_add_queue(socket_queue **sq, int sd)
 		tq->next = NULL;
 	*sq = tq;
 
-	return 0;
+	return E_TGC_OK;
 }
 
 /*-----------------------------------------------------------------------------
@@ -253,23 +259,26 @@ void tgc_shutdown(TGC *tgc)
 		sd = tgc->node.cc.control_sd;
 	}
 	
-	if (sd>=0) 
-		close(sd);
+	if (sd>=0) {
+		close_connection(&sd);
+	}
 
-	if (tgc->sdi_accept>=0)
-		close(tgc->sdi_accept);
+	if (tgc->sdi_accept>=0) {
+		close_connection(&(tgc->sdi_accept));
+	}
 
-	if (tgc->sdx_accept>=0)
-		close(tgc->sdx_accept);
+	if (tgc->sdx_accept>=0) {
+		close_connection(&(tgc->sdx_accept));
+	}
 	
 	while (sq) {
 		sd = tgc_remove_queue(&sq);
-		close(sd);
+		close_connection(&sd);
 	}
 	
 	while (tgc->pairs) {
-		close(tgc->pairs->sdi);
-		close(tgc->pairs->sdx);
+		close_connection(&(tgc->pairs->sdi));
+		close_connection(&(tgc->pairs->sdx));
 		tgc_remove_list(&(tgc->pairs), tgc->pairs );
 	}
 }
@@ -293,7 +302,12 @@ int tgc_rxtx(int rx_sd, int tx_sd, unsigned char *buf, unsigned char key)
 	if (rx_sd<0 || tx_sd<0 || !buf)
 		return E_TGC_IE;
 
-	if ( (nread=read(rx_sd, buf, TGC_BUFFER_SIZE)) <=0 ) {
+	if ( (nread=read(rx_sd, buf, TGC_BUFFER_SIZE)) == 0 ) {
+		PRINT_LOG(5, "End of data");
+		return E_TGC_END;
+	} 
+	
+	if (nread < 0) {
 		PRINT_LOG(3, "Error reading from socket");
 		return E_TGC_READ;
 	}
@@ -333,16 +347,16 @@ int tgc_pump(int sdi, int sdx, unsigned char *buf, unsigned char key)
 
 		if (FD_ISSET(sdi, &reads)) {
 			if ( (rc=tgc_rxtx(sdi, sdx, buf, key)) < 0 ) {
-				close(sdi);
-				close(sdx);
+				close_connection(&sdi);
+				close_connection(&sdx);
 				return rc;
 			}
 		}
 
 		if (FD_ISSET(sdx, &reads)) {
 			if ( (rc=tgc_rxtx(sdx, sdi, buf, key)) < 0 ) {
-				close(sdx);
-				close(sdi);
+				close_connection(&sdx);
+				close_connection(&sdi);
 				return rc;
 			}
 		}
@@ -394,6 +408,7 @@ int tgc_ll(TGC *tgc)
 	char		cmd;
 	struct in_addr	cc_addr = { 0 } ;
 	char		ip[16];
+	int		close_control = 0;
 
 
 	if (!tgc)
@@ -437,7 +452,7 @@ int tgc_ll(TGC *tgc)
 			if (tgc->node.ll.control_sd<0) { 
 				//client came in while there is no control connection, so we close it
 				PRINT_LOG(3, "rejecting client connection before control connection received ");
-				close(sdx);
+				close_connection(&sdx);
 				continue;
 			}
 
@@ -445,7 +460,7 @@ int tgc_ll(TGC *tgc)
 			PRINT_LOG(3, "client (%s) connected on %d!", ip, tgc->node.ll.ll_port);
 			// run the filter
 			if (!tgc_check_filter(tgc, ip)) {
-				close(sdx);
+				close_connection(&sdx);
 				continue;
 			}
 			PRINT_LOG(3, "Ask CC for a connection for the new client");
@@ -453,12 +468,12 @@ int tgc_ll(TGC *tgc)
 			if (tgc_send(tgc->node.ll.control_sd, TGC_COMM_CCC)>=0) {
 				if (tgc_add_queue( &(tgc->node.ll.socketq), sdx)<0) {
 					PRINT_LOG(1, "Error adding socket to queue!");
-					close(sdx);
+					close_connection(&sdx);
 					return E_TGC_NOCANDO;
 				}
 				PRINT_LOG(5, "client connection added to the queue");
 		 	} else 
-				close(sdx); // couldn't ask CC for a new connection, close the client
+				close_connection(&sdx); // couldn't ask CC for a new connection, close the client
 		} 
 		
 		if (FD_ISSET(tgc->sdi_accept, &reads)) { // from CC
@@ -476,8 +491,7 @@ int tgc_ll(TGC *tgc)
 			PRINT_LOG(3, "CC connected from %s", ip);
 			// run the filter
 			if (!tgc_check_filter(tgc, ip)) {
-				close(sdi);
-				sdi = -1;
+				close_connection(&sdi);
                                 continue;
 			}
 
@@ -492,7 +506,7 @@ int tgc_ll(TGC *tgc)
 					// if this CC's address is different from control_sd's OR
 					// if there are no client connections waiting in the queue
 					// we reject the CC
-					close(sdi);
+					close_connection(&sdi);
 					PRINT_LOG(1, "Suspicious CC rejected");
 				} else { //everything seems good, lets do our thing!
 					sdx = tgc_remove_queue(&(tgc->node.ll.socketq));
@@ -506,14 +520,14 @@ int tgc_ll(TGC *tgc)
 #ifdef HAVE_FORK
 							// FORK
 							if (fork()==0) { // child
-								close(tgc->sdi_accept);
-								close(tgc->sdx_accept);
-								close(tgc->node.ll.control_sd);
+								close_connection(&(tgc->sdi_accept));
+								close_connection(&(tgc->sdx_accept));
+								close_connection(&(tgc->node.ll.control_sd));
 								tgc_pump(sdi, sdx, tgc->buf, tgc->key);
 								break; //exit(0);
 							} else { // parent
-								close(sdi); sdi=-1;
-								close(sdx); sdx=-1;
+								close_connection(&sdi);
+								close_connection(&sdx);
 							}
 #endif
 						}
@@ -522,31 +536,40 @@ int tgc_ll(TGC *tgc)
 			}
 		} 
 		
-		if (tgc->node.ll.control_sd>=0 && 
-		    FD_ISSET(tgc->node.ll.control_sd, &reads)) {
-			cmd = tgc_read(tgc->node.ll.control_sd);
-			switch (cmd) {
-				case TGC_COMM_PING:
-					PRINT_LOG(2, "Received a ping from CC");
-					if (tgc_send(tgc->node.ll.control_sd, TGC_COMM_PING)<0) {
-						PRINT_LOG(1, "Internal Error: can't write to control connection");
-						close(tgc->node.ll.control_sd);
-						FD_CLR(tgc->node.ll.control_sd, &rfds);
-						tgc->node.ll.control_sd = -1;
-						continue;
-					}
-					break;
-				case TGC_COMM_CLOSE:
-					PRINT_LOG(3, "CC wants us to close the lingering client connection!");
-					if ((sd=tgc_remove_queue(&(tgc->node.ll.socketq)))>=0)
-						close(sd);
-					break;
-				default:
-					PRINT_LOG(1, "Internal Error: Uknown code recieved from CC!");
-					close(tgc->node.ll.control_sd);
-					FD_CLR(tgc->node.ll.control_sd, &rfds);
-					tgc->node.ll.control_sd = -1;
-					continue;
+		if (tgc->node.ll.control_sd>=0 && FD_ISSET(tgc->node.ll.control_sd, &reads)) {
+			close_control = 0;
+			if (tgc_read(tgc->node.ll.control_sd, &cmd) == E_TGC_OK) {
+				switch (cmd) {
+					case TGC_COMM_PING:
+						PRINT_LOG(2, "Received a ping from CC");
+						if (tgc_send(tgc->node.ll.control_sd, TGC_COMM_PING)<0) {
+							PRINT_LOG(1, "Internal Error: can't write to control connection");
+							FD_CLR(tgc->node.ll.control_sd, &rfds);
+							close_connection(&(tgc->node.ll.control_sd));
+							tgc->node.ll.control_sd = -1;
+							continue;
+						}
+						break;
+					case TGC_COMM_CLOSE:
+						PRINT_LOG(3, "CC wants us to close the lingering client connection!");
+						if ((sd=tgc_remove_queue(&(tgc->node.ll.socketq)))>=0)
+							close_connection(&sd);
+						break;
+					default:
+						PRINT_LOG(1, "Internal Error: Uknown code (0x%x) recieved from CC!", cmd);
+						close_control = 1;
+				}
+			} else {
+				close_control = 1;
+			}
+
+			if (close_control) {
+				PRINT_LOG(1, "closing control connection");
+				FD_CLR(tgc->node.ll.control_sd, &rfds);
+				close_connection(&(tgc->node.ll.control_sd));
+				tgc->node.ll.control_sd = -1;
+				close_control = 0;
+				continue;
 			}
 		}
 
@@ -556,12 +579,12 @@ int tgc_ll(TGC *tgc)
 			while (conn) {
 				if (FD_ISSET(conn->sdi , &reads)) { // from CC?
 					if ( (rc=tgc_rxtx(conn->sdi, conn->sdx, tgc->buf, tgc->key)) < 0 ) {
-						close(conn->sdi);
-						close(conn->sdx);
 						FD_CLR(conn->sdi, &rfds);
 						FD_CLR(conn->sdx, &rfds);
+						close_connection(&(conn->sdi));
+						close_connection(&(conn->sdx));
 						prev_conn = conn;
-						conn=conn->next;
+						conn = conn->next;
 						tgc_remove_list( &(tgc->pairs), prev_conn);
 						continue;
 					}
@@ -569,12 +592,12 @@ int tgc_ll(TGC *tgc)
 
 				if (FD_ISSET(conn->sdx, &reads)) { // from client?
 					if ( (rc=tgc_rxtx(conn->sdx, conn->sdi, tgc->buf, tgc->key)) < 0 ) {
-						close(conn->sdi);
-						close(conn->sdx);
 						FD_CLR(conn->sdi, &rfds);
 						FD_CLR(conn->sdx, &rfds);
+						close_connection(&(conn->sdi));
+						close_connection(&(conn->sdx));
 						prev_conn = conn;
-						conn=conn->next;
+						conn = conn->next;
 						tgc_remove_list( &(tgc->pairs), prev_conn);
 						continue;
 					}
@@ -599,6 +622,7 @@ int tgc_cc(TGC *tgc)
 	fd_set  rfds, reads;
 	char	cmd;
 	socket_pair_list	*conn, *prev_conn;
+	int 	close_control=0;
 
 
 	if (!tgc)
@@ -635,11 +659,11 @@ int tgc_cc(TGC *tgc)
 			
 			if (rc==0 || (last_time+tgc->node.cc.interval)<time(NULL)) { 
 				//either timed out or it's time to send ping again
-				PRINT_LOG(2, "Sending ping the LL");
+				PRINT_LOG(2, "Sending ping to LL");
 				if (tgc_send(tgc->node.cc.control_sd, TGC_COMM_PING) < 0) {
 					PRINT_LOG(1, "Ping failed, closing the control connection!");
-					close(tgc->node.cc.control_sd);
 					FD_CLR(tgc->node.ll.control_sd, &rfds);
+					close_connection(&(tgc->node.cc.control_sd));
 					tgc->node.cc.control_sd = -1;
 					break;
 				}
@@ -647,59 +671,69 @@ int tgc_cc(TGC *tgc)
 			}
 
 			if (FD_ISSET(tgc->node.cc.control_sd, &reads)) {
-				cmd = tgc_read(tgc->node.cc.control_sd);
-				switch (cmd) {
-					case TGC_COMM_PING:
-						PRINT_LOG(2, "Recieved a ping from LL");
-						// Meh, we just ignore the ping!
-						break;
-					case TGC_COMM_CCC:
-						PRINT_LOG(3, "LL wants us a new connection");
-						// first try to connect to the server!
-						if ( (sdx=connect_server(CC_SERVER, CC_SERVER_PORT))<0 ) {
-							PRINT_LOG(2, "failed connecting to server to %s:%d", CC_SERVER, CC_SERVER_PORT);
-							tgc_send(tgc->node.cc.control_sd, TGC_COMM_CLOSE);
-							continue; 
-						}
-
-						// now connect to LL
-						if ( (sdi=connect_server(LL_HOST, CC_LL_PORT))<0 ) {
-							PRINT_LOG(2, "failed connecting to LL %s:%d", LL_HOST, CC_LL_PORT);
-							close(sdx);
-							sdx = -1;
-							tgc_send(tgc->node.cc.control_sd, TGC_COMM_CLOSE);
-							continue;
-						}
-						PRINT_LOG(3, "connected to server %s:%d", LL_HOST, CC_LL_PORT);
-		
-						if (sdx>=0 && sdi>=0) {
-							if (tgc->method==TGC_METHOD_SELECT) {
-								if (!tgc_add_list( &(tgc->pairs), sdi, sdx)) {
-									FD_SET(sdi, &rfds);
-									FD_SET(sdx, &rfds);
-								} 
-							} else { // FORK
-#ifdef HAVE_FORK
-								if (fork()==0) { // child
-									close(tgc->sdi_accept);
-									close(tgc->sdx_accept);
-									close(tgc->node.cc.control_sd);
-									tgc_pump(sdi, sdx, tgc->buf, tgc->key);
-									exit(0);
-								} else { // parent
-									close(sdi); sdi=-1;
-									close(sdx); sdx=-1;
-								}
-#endif
+				close_control = 0;
+				if (tgc_read(tgc->node.cc.control_sd, &cmd) == E_TGC_OK) {
+					switch (cmd) {
+						case TGC_COMM_PING:
+							PRINT_LOG(2, "Recieved a ping from LL");
+							// Meh, we just ignore the ping!
+							break;
+						case TGC_COMM_CCC:
+							PRINT_LOG(3, "LL wants us a new connection");
+							// first try to connect to the server!
+							if ( (sdx=connect_server(CC_SERVER, CC_SERVER_PORT))<0 ) {
+								PRINT_LOG(2, "failed connecting to server to %s:%d", CC_SERVER, CC_SERVER_PORT);
+								tgc_send(tgc->node.cc.control_sd, TGC_COMM_CLOSE);
+								continue; 
 							}
-						}
 
-						break;
-					default:
-						PRINT_LOG(1, "Uknown command received, closing connection to LL!");
-						close(tgc->node.cc.control_sd);
-						FD_CLR(tgc->node.cc.control_sd, &rfds);
-						tgc->node.cc.control_sd = -1;
+							// now connect to LL
+							if ( (sdi=connect_server(LL_HOST, CC_LL_PORT))<0 ) {
+								PRINT_LOG(2, "failed connecting to LL %s:%d", LL_HOST, CC_LL_PORT);
+								close_connection(&sdx);
+								sdx = -1;
+								tgc_send(tgc->node.cc.control_sd, TGC_COMM_CLOSE);
+								continue;
+							}
+							PRINT_LOG(3, "connected to server %s:%d", LL_HOST, CC_LL_PORT);
+			
+							if (sdx>=0 && sdi>=0) {
+								if (tgc->method==TGC_METHOD_SELECT) {
+									if (!tgc_add_list( &(tgc->pairs), sdi, sdx)) {
+										FD_SET(sdi, &rfds);
+										FD_SET(sdx, &rfds);
+									} 
+								} else { // FORK
+#ifdef HAVE_FORK
+									if (fork()==0) { // child
+										close_connection(&(tgc->sdi_accept));
+										close_connection(&(tgc->sdx_accept));
+										close_connection(&(tgc->node.cc.control_sd));
+										tgc_pump(sdi, sdx, tgc->buf, tgc->key);
+										exit(0);
+									} else { // parent
+										close_connection(&sdi);
+										close_connection(&sdx);
+									}
+#endif
+								}
+							}
+
+							break;
+						default:
+							PRINT_LOG(1, "Uknown command received, closing control connection");
+							close_control = 1;
+					}
+				} else {
+					close_control = 1;
+				}
+						
+				if (close_control) {
+					PRINT_LOG(1, "Closing control connection to LL");
+					FD_CLR(tgc->node.cc.control_sd, &rfds);
+					close_connection(&(tgc->node.cc.control_sd));
+					tgc->node.cc.control_sd = -1;
+					close_control = 0;
 				}
 			}
 
@@ -710,10 +744,10 @@ int tgc_cc(TGC *tgc)
 					
 					if (FD_ISSET(conn->sdi , &reads)) { // from CC?
 						if ( (rc=tgc_rxtx(conn->sdi, conn->sdx, tgc->buf, tgc->key)) < 0 ) {
-							close(conn->sdi);
-							close(conn->sdx);
 							FD_CLR(conn->sdi, &rfds);
 							FD_CLR(conn->sdx, &rfds);
+							close_connection(&(conn->sdi));
+							close_connection(&(conn->sdx));
 							prev_conn = conn;
 							conn = conn->next;
 							tgc_remove_list( &(tgc->pairs), prev_conn);
@@ -723,10 +757,10 @@ int tgc_cc(TGC *tgc)
 
 					if (FD_ISSET(conn->sdx, &reads)) { // from client?
 						if ( (rc=tgc_rxtx(conn->sdx, conn->sdi, tgc->buf, tgc->key)) < 0 ) {
-							close(conn->sdi);
-							close(conn->sdx);
 							FD_CLR(conn->sdi, &rfds);
 							FD_CLR(conn->sdx, &rfds);
+							close_connection(&(conn->sdi));
+							close_connection(&(conn->sdx));
 							prev_conn = conn;
 							conn = conn->next;
 							tgc_remove_list( &(tgc->pairs), prev_conn);
@@ -784,7 +818,7 @@ int tgc_pf(TGC *tgc)
 					continue;
 
 				PRINT_LOG(0, "Error accepting new connection!");
-				close(tgc->sdi_accept);
+				close_connection(&(tgc->sdi_accept));
 				break; //exit
 			}
 
@@ -792,14 +826,14 @@ int tgc_pf(TGC *tgc)
 			strncpy(ip, inet_ntoa(addr.sin_addr), 16);
 			PRINT_LOG(3, "Received a client from %s", ip);
 			if (!tgc_check_filter(tgc, ip)) {
-				close(sdi);
+				close_connection(&sdi);
 				sdi = -1;
 				continue;
 			}
 
 			if ( (sdx=connect_server(tgc->node.pf.dst_host, tgc->node.pf.dst_port))<0 ) {
 				PRINT_LOG(1, "failed connecting to %s:%d", tgc->node.pf.dst_host, tgc->node.pf.dst_port);
-				close(sdi);
+				close_connection(&sdi);
 				sdi = -1;
 				continue;
 			}
@@ -815,12 +849,12 @@ int tgc_pf(TGC *tgc)
 			} else { //fork method
 #ifdef HAVE_FORK
 				if (fork()==0) { //child
-					close(tgc->sdi_accept);
+					close_connection(&(tgc->sdi_accept));
 					tgc_pump(sdi, sdx, tgc->buf, tgc->key);
 					break;
 				} else {// parent
-					close(sdi);
-					close(sdx);
+					close_connection(&sdi);
+					close_connection(&sdx);
 					PRINT_LOG(3, "waiting for incomming connections on port %d again...", tgc->node.pf.port);
 				}
 #endif
@@ -833,10 +867,10 @@ int tgc_pf(TGC *tgc)
 			while (conn) {
 				if (FD_ISSET(conn->sdi , &reads)) { // from client
 					if ( (rc=tgc_rxtx(conn->sdi, conn->sdx, tgc->buf, tgc->key)) < 0 ) {
-						close(conn->sdi);
-						close(conn->sdx);
 						FD_CLR(conn->sdi, &rfds);
 						FD_CLR(conn->sdx, &rfds);
+						close_connection(&(conn->sdi));
+						close_connection(&(conn->sdx));
 						prev_conn = conn;
 						conn = conn->next;
 						tgc_remove_list( &(tgc->pairs), prev_conn);
@@ -847,10 +881,10 @@ int tgc_pf(TGC *tgc)
 
 				if (FD_ISSET(conn->sdx, &reads)) { // from server
 					if ( (rc=tgc_rxtx(conn->sdx, conn->sdi, tgc->buf, tgc->key)) < 0 ) {
-						close(conn->sdi);
-						close(conn->sdx);
 						FD_CLR(conn->sdi, &rfds);
 						FD_CLR(conn->sdx, &rfds);
+						close_connection(&(conn->sdi));
+						close_connection(&(conn->sdx));
 						prev_conn = conn;
 						conn=conn->next;
 						tgc_remove_list( &(tgc->pairs), prev_conn);

@@ -147,6 +147,7 @@ Messege Structure:
 #define E_TGC_IE		-3
 #define E_TGC_READ		-4
 #define E_TGC_WRITE		-5
+#define E_TGC_END		-6
 
 
 /* function prototypes */

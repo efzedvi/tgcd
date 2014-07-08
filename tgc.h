@@ -39,7 +39,7 @@ Disclaimer:
 #ifndef _TGC_H_
 #define _TGC_H_
 
-#define TGC_DEFAULT_LOGFILE	"/dev/null"
+#define TGC_DEFAULT_LOGFILE	""
 #define TGC_DEFAULT_LOGLEVEL	0
 #define TGC_BUFFER_SIZE 	4096
 

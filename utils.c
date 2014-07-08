@@ -62,8 +62,11 @@ int     deny_severity = LOG_WARNING;
 void init_log(int dlevel, char *log_filename, int daemon)
 {
 #ifdef DEBUG
-	logfile = fopen(log_filename, "a");
-
+	if (log_filename && log_filename[0])
+		logfile = fopen(log_filename, "a");
+	else 
+		close_log();
+	
 	if (logfile)
 		setbuf(logfile, NULL);
 

@@ -98,7 +98,7 @@ void print_usage(int exit_code)
 	printf("\n");
 	printf("Common options:\n");
         printf(" -m, --method { f | s }	    f: Fork  s: Select (default: s)\n");
-        printf(" -f, --filter filter	    Optional argument to run filter on new connections, IP passed as argument\n");
+        printf(" -f, --filter filter	    Optional argument to run a filter on new connections, IP passed as argument\n");
         printf(" -l, --log file 	    Write logs to file. (default:'%s')\n", TGC_DEFAULT_LOGFILE);
 	printf(" -g, --level number 	    Log level detail (default:%d).\n", TGC_DEFAULT_LOGLEVEL);
 	printf(" -n, --nodaemon             Do not become daemon\n");
@@ -239,9 +239,9 @@ int main(int argc,char *argv[])
 				strncpy(logfilename, optarg, MAX_PATH);		
 				break;
 			case 'f':
-				strncpy( tgc.filter, optarg, MAX_PATH);
+				strncpy(tgc.filter, optarg, MAX_PATH);
 				rc = stat(tgc.filter, &filter_stat);
-				if (rc || !S_ISREG(filter_stat.st_mode)) {
+				if (rc || !S_ISREG(filter_stat.st_mode) || access(tgc.filter, X_OK)) {
 					fprintf(stderr, "Invalid filter '%s'\n", optarg);
 					exit(3);
 				}

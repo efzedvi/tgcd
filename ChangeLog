@@ -1,3 +1,4 @@
+2015-03-15: Fixed a bug where the filter's access permission wasn't being properly checked, also fixed some typos (1.0.3)
 2014-07-06: Fixed a bug which caused incomplete data transfer in some HTTP connections (1.0.2)
 2013-11-06: Added an argument so that an external filter could be called upon accepting connections to permit or reject the connection (1.0.1)
 2008-12-18: Fixed a bug where if both CC and LL used "fork" method the child processes could stay on even after the connection was dropped (0.98)

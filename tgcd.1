@@ -47,10 +47,10 @@ will handle the multiple connections faster in expense of system memory.
 .B tgcd 
 links with libwrap (if available at build time) to provide a simple access control mechanism that's provided by hosts_access(5).
 
-Aside from libwrap support, since version 1.0.2 an executable can also be passed to 
+Aside from libwrap support, since version 1.0.3 an executable can also be passed to 
 .B tgcd
 (using -f or --filter argument) to perform whether or not accept a connection. The script takes the incoming
-IP address as the parameter, and its exit code indicates whether or now 
+IP address as the parameter, and its exit code indicates whether or not 
 .B tgcd
 should accept the connection or not. Exit code 0 means to accept, non-zero means to reject the incoming connection.
 The filter feature only takes effect on LL and LC nodes.

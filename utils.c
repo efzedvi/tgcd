@@ -360,7 +360,7 @@ int read_data(int fd, unsigned char *buf, int len)
         int  nread=0;
         int  total_read = 0;
                                                                                                                                   
-        while (nread < len) {
+        while (total_read < len) {
                 nread = read(fd, buf+total_read, len-total_read);
 
                 if (nread < 0)

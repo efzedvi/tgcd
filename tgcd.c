@@ -141,7 +141,7 @@ void init_server(void)
 	signal(SIGHUP, shutdown_server);
 
 	if (tgc.method==TGC_METHOD_FORK) 
-		signal(SIGCLD, sig_cld);
+		signal(SIGCHLD, sig_cld);
 }
 
 /*-----------------------------------------------------------------------------

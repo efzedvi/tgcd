@@ -196,10 +196,11 @@ va_dcl
 ------------------------------------------------------------------------------*/
 RETSIGTYPE sig_cld()
 {
-       //signal(SIGCLD, sig_cld);
+       //signal(SIGCHLD, sig_cld);
        //while (waitpid((pid_t)-1, (int *) NULL, WNOHANG) > 0);
 
 	while (wait3((int *)NULL, WNOHANG, (struct rusage *)NULL) > 0);
+       signal(SIGCHLD, sig_cld);
 }
 
 /*---------------------------------------------------------------------------
@@ -284,7 +285,7 @@ void become_daemon(void)
 	// we are the child now!
 
         /* Stop zombies */
-        signal(SIGCLD, sig_cld);
+        signal(SIGCHLD, sig_cld);
 	
 #ifdef SETPGRP_VOID
 	setpgrp();

@@ -791,7 +791,7 @@ int tgc_pf(TGC *tgc)
 	char			ip[16];
 
 
-	signal(SIGCLD, SIG_DFL); // to avoid zombie process
+	signal(SIGCHLD, SIG_IGN); // to avoid zombie process
 
  	if ( (tgc->sdi_accept=open_server_socket(tgc->node.pf.port)) < 0 ) {
 		PRINT_LOG(1, "Can't bind to port %d", tgc->node.pf.port);

@@ -1,4 +1,10 @@
 - Add bugreport email and hosting site URL to the usage and the README
-- test it on FreeBSD, and different linuxes
+- test it on FreeBSD, and different linuxes (done)
 - Add IPV6 support
+- Make tgcd able to listen on a particular interface and not all
+- plan for v2.0 : Add config file like the one of rinetd.conf and make it so
+	that it can be any node, like this:
+	CC s:host:port ll:host:port   k:encryption_key   f:filter
+	LL host:port   cc::host:port  k:key		 f:filter
+	PF host:port   s:host:port    k:key		 f:filter
 

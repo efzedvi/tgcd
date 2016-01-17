@@ -199,8 +199,9 @@ RETSIGTYPE sig_cld()
        //signal(SIGCHLD, sig_cld);
        //while (waitpid((pid_t)-1, (int *) NULL, WNOHANG) > 0);
 
-	while (wait3((int *)NULL, WNOHANG, (struct rusage *)NULL) > 0);
-       signal(SIGCHLD, sig_cld);
+	while (wait3((int *)NULL, WNOHANG, (struct rusage *)NULL) > 0)
+		;
+	signal(SIGCHLD, sig_cld);
 }
 
 /*---------------------------------------------------------------------------

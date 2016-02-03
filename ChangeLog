@@ -1,3 +1,4 @@
+2016-02-01: Added authentication between LL and CC nodes using HMAC(1.1.0)
 2015-04-01: Made it build on FreeBSD 10.1
 2015-03-17: Fixed a bug where the read_data could cause problem on some special cases (1.0.3)
 2015-03-15: Fixed a bug where the filter's access permission wasn't being properly checked, also fixed some typos (1.0.3)

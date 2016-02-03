@@ -44,7 +44,9 @@ Disclaimer:
 #define TGC_BUFFER_SIZE 	4096
 
 // time intervals between each connectin attempt to LL
-#define  TGC_TIMEOUT	40
+#define TGC_TIMEOUT	40
+// Number of seconds CC and LL nods spend waiting for HAMC and ACK during the authentication
+#define TGC_AUTH_TIMEOUT 5
 
 #define	CC_SERVER	tgc->node.cc.server
 #define CC_SERVER_PORT	tgc->node.cc.server_port
@@ -55,6 +57,7 @@ Disclaimer:
 #define	TGC_COMM_PING	'P'	
 #define	TGC_COMM_CCC	'O'
 #define TGC_COMM_CLOSE	'C'
+#define TGC_COMM_ACK	'A'
 
 #define TGC_METHOD_FORK		'F'
 #define TGC_METHOD_SELECT	'S'
@@ -116,6 +119,9 @@ typedef struct {
 	socket_pair_list	*pairs;
 	unsigned char   	buf[TGC_BUFFER_SIZE];
 	unsigned char		key;
+#ifdef HAVE_MHASH_H
+	char			hmac[MAX_PATH+1];
+#endif
 	char   			method;
 	char   			filter[MAX_PATH + 1];
 } TGC;
@@ -159,6 +165,12 @@ int tgc_run(TGC *tgc);
 int tgc_cc(TGC *tgc);
 int tgc_ll(TGC *tgc);
 int tgc_pf(TGC *tgc);
+
+#ifdef HAVE_MHASH_H
+int tgc_gen_hash(TGC *tgc, const char *passwd);
+int tgc_ll_auth_cc(TGC *tgc, int socket);
+int tgc_cc_auth_ll(TGC *tgc);
+#endif
 
 #endif
 

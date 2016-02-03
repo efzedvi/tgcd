@@ -363,7 +363,7 @@ int read_data(int fd, unsigned char *buf, int len)
         int  nread=0;
         int  total_read = 0;
 
-	if (fd<0) return -1;
+	if (fd<0 || !buf) return -1;
 
         while (total_read < len) {
                 nread = read(fd, buf+total_read, len-total_read);
@@ -377,6 +377,29 @@ int read_data(int fd, unsigned char *buf, int len)
                 total_read += nread;
         }
         return total_read;
+}
+
+/*-----------------------------------------------------------------
+  read data from peer
+-----------------------------------------------------------------*/
+int read_data_with_timeout(int fd, char *buf, int len, unsigned int seconds)
+{
+        int  	rv = 0;
+	fd_set 	rdset;
+	struct timeval timeout;
+	
+	if (fd<0 || !buf) return -1;
+
+	FD_ZERO(&rdset);
+	FD_SET(fd, &rdset);
+	timeout.tv_sec = seconds;
+	timeout.tv_usec = 0;
+
+	rv = select(FD_SETSIZE, &rdset, NULL, NULL, &timeout);
+	if (rv <= 0)  // timeout or error
+		return -1;
+	
+	return read(fd, buf, len);
 }
 
 /*-----------------------------------------------------------------------------

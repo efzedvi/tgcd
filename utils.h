@@ -89,6 +89,7 @@ void 	become_daemon(void);
 void 	change_user(void);
 int 	xioctl(int fd, int request, void *argp);
 int 	read_data(int fd, unsigned char *buf, int len);
+int 	read_data_with_timeout(int fd, char *buf, int len, unsigned int seconds);
 int 	parse_host(char *hostport, char *host, unsigned short *port);
 int 	connect_server(char *host, int port);
 int	open_server_socket(int port);

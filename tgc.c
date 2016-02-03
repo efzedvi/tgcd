@@ -466,8 +466,8 @@ int tgc_ll(TGC *tgc)
 			}
 			PRINT_LOG(3, "Ask CC for a connection for the new client");
 
-			if (tgc_send(tgc->node.ll.control_sd, TGC_COMM_CCC)>=0) {
-				if (tgc_add_queue( &(tgc->node.ll.socketq), sdx)<0) {
+			if (tgc_send(tgc->node.ll.control_sd, TGC_COMM_CCC) >= 0) {
+				if (tgc_add_queue( &(tgc->node.ll.socketq), sdx) < 0) {
 					PRINT_LOG(1, "Error adding socket to queue!");
 					close_connection(&sdx);
 					return E_TGC_NOCANDO;
@@ -492,12 +492,20 @@ int tgc_ll(TGC *tgc)
 			PRINT_LOG(3, "CC connected from %s", ip);
 			// run the filter
 			if (!tgc_check_filter(tgc, ip)) {
+				PRINT_LOG(1, "Filter refused incoming CC connection");
 				close_connection(&sdi);
                                 continue;
 			}
 
-			if (tgc->node.ll.control_sd<0) { 
+			if (tgc->node.ll.control_sd < 0) { 
 				// it's the control connection
+#ifdef HAVE_MHASH_H_
+				if (tgc_ll_auth_cc(tgc, sdi) != E_TGC_OK) {
+					PRINT_LOG(0, "Failed to authenticate CC control connection");
+					close_connection(&sdi);
+					continue;
+				}
+#endif
 				tgc->node.ll.control_sd = sdi;
 				cc_addr.s_addr = addr.sin_addr.s_addr;
 				FD_SET(sdi, &rfds);
@@ -640,11 +648,19 @@ int tgc_cc(TGC *tgc)
 			sleep(tgc->node.cc.interval);
 		
 		// connect to LL
-		if ( (tgc->node.cc.control_sd=connect_server(LL_HOST, CC_LL_PORT))<0 ) {
-			PRINT_LOG(2, "failed connecting to %s:%d", LL_HOST, CC_LL_PORT);
+		if ( (tgc->node.cc.control_sd=connect_server(LL_HOST, CC_LL_PORT)) < 0 ) {
+			PRINT_LOG(0, "failed connecting to %s:%d", LL_HOST, CC_LL_PORT);
 			tgc->node.cc.control_sd = -1;
 			continue;
 		}
+#ifdef HAVE_MHASH_H
+		if ( tgc_cc_auth_ll(tgc) != E_TGC_OK ) {
+			PRINT_LOG(0, "HMAC authentication with LL (%s:%d) failed", 
+				  LL_HOST, CC_LL_PORT);
+			close_connection( &(tgc->node.cc.control_sd) );
+			continue;
+		}
+#endif
 		PRINT_LOG(3, "Control connection to CC on %s:%d established", LL_HOST, CC_LL_PORT);
 	
 		FD_SET(tgc->node.cc.control_sd, &rfds);
@@ -653,7 +669,7 @@ int tgc_cc(TGC *tgc)
 			tv.tv_sec = tgc->node.cc.interval;
 			tv.tv_usec = 0;
 			reads = rfds;
-			if ( (rc=select(FD_SETSIZE, &reads, NULL, NULL, &tv))<0 ) {
+			if ( (rc=select(FD_SETSIZE, &reads, NULL, NULL, &tv)) < 0 ) {
 				PRINT_LOG(1, "Error on select");
 				continue;
 			}
@@ -827,8 +843,8 @@ int tgc_pf(TGC *tgc)
 			strncpy(ip, inet_ntoa(addr.sin_addr), 16);
 			PRINT_LOG(3, "Received a client from %s", ip);
 			if (!tgc_check_filter(tgc, ip)) {
+				PRINT_LOG(1, "Filter refused incoming CC connection");
 				close_connection(&sdi);
-				sdi = -1;
 				continue;
 			}
 
@@ -899,8 +915,103 @@ int tgc_pf(TGC *tgc)
 	}
 	return E_TGC_NOCANDO;
 }
+/*-----------------------------------------------------------------------------
+ * LL-CC connection initiation using HMAC (if available)
+------------------------------------------------------------------------------*/
+#ifdef HAVE_MHASH_H
+int tgc_gen_hash(TGC *tgc, const char *passwd)
+{
+	const char hmac_msg[] = "TGCD_Control_Connection";
+	int  	hmac_msg_len = 0, passwd_len = 0, i=0;
+	char	hmac[MAX_PATH+1];
+	MHASH	td;
+
+	if (!passwd || !passwd[0])
+		return E_TGC_NOCANDO;
+
+	passwd_len = strlen(passwd);
+	hmac_msg_len = strlen(hmac_msg);
+
+	td = mhash_hmac_init(MHASH_SHA256, (void *)passwd, passwd_len, 
+			     mhash_get_hash_pblock(MHASH_SHA256));
+	mhash(td, hmac_msg, hmac_msg_len);
+	
+	if (!mhash_hmac_deinit(td, hmac)) {
+		PRINT_LOG(0, "Error generating HMAC hash");
+		return E_TGC_NOCANDO;
+	}
+	for (i = 0; i < mhash_get_block_size(MHASH_SHA256); i++) 
+		snprintf(tgc->hmac+i*2, MAX_PATH-2*i, "%.2x", hmac[i]);
+	tgc->hmac[i*2] = '\0';
+
+	return E_TGC_OK;
+}
+
+int tgc_ll_auth_cc(TGC *tgc, int socket)
+{
+	char hmac[MAX_PATH + 1];
+	int  hmac_len = 0;
+	char ack = TGC_COMM_ACK;
 
 
+	if (socket < 0)
+		return E_TGC_NOCANDO;
+
+	if (!tgc->hmac || !tgc->hmac[0]) 
+		return E_TGC_OK;
+
+	if ( read_data_with_timeout(socket, hmac, MAX_PATH, TGC_AUTH_TIMEOUT) <= 0) {
+                PRINT_LOG(0, "Timeout while reading HMAC from CC");
+                return E_TGC_READ;
+	}
+
+	hmac_len = strlen(tgc->hmac);
+	if (!strncmp(tgc->hmac, hmac, hmac_len)) {
+		if ( write(socket, &ack, 1) <= 0) {
+			PRINT_LOG(0, "Error sending ACL to CC");
+			return E_TGC_WRITE;
+		}
+		return E_TGC_OK;
+	}
+
+	return E_TGC_NOCANDO;
+}
+
+int tgc_cc_auth_ll(TGC *tgc)
+{
+	int hmac_len = 0;
+	char cmd = '\0';
+
+
+	if (tgc->node.cc.control_sd < 0) 
+		return E_TGC_NOCANDO;
+
+	// no hmac? meh we pretend we don't have to send it then.
+	// ... which may get LL pissed off and close the connection on us
+	if (!tgc->hmac || !tgc->hmac[0]) 
+		return E_TGC_OK;
+
+	hmac_len = strlen(tgc->hmac);
+
+	if ( write(tgc->node.cc.control_sd, tgc->hmac, hmac_len) < hmac_len) {
+                PRINT_LOG(0, "Error sending HMAC to LL");
+                return E_TGC_WRITE;
+        }
+
+	if (read_data_with_timeout(tgc->node.cc.control_sd, &cmd, 1, TGC_AUTH_TIMEOUT) <= 0) {
+                PRINT_LOG(0, "Timeout while reading ACK from LL");
+                return E_TGC_READ;
+	}
+
+	if (cmd != TGC_COMM_ACK) {
+                PRINT_LOG(0, "Invalid ACK from LL");
+		return E_TGC_NOCANDO;
+	}
+
+	return E_TGC_OK;
+}
+
+#endif
 /*-----------------------------------------------------------------------------
  * Decide what to do!
 ------------------------------------------------------------------------------*/

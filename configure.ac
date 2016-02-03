@@ -2,11 +2,11 @@
 # Process this file with autoconf to produce a configure script.
 
 #AC_PREREQ(2.59)
-AC_INIT(tgcd, 1.0.3, faraz@fzv.ca)
+AC_INIT(tgcd, 1.1.0, faraz@fzv.ca)
 AC_CONFIG_SRCDIR([includes.h])
 #AC_CONFIG_HEADER(config.h)
 
-AM_INIT_AUTOMAKE(tgcd,1.0.3)
+AM_INIT_AUTOMAKE(tgcd,1.1.0)
 AM_CONFIG_HEADER(config.h)
 
 # Checks for programs.
@@ -19,6 +19,20 @@ AC_PROG_INSTALL
 # FIXME: Replace `main' with a function in `-lwrap':
 AC_CHECK_LIB([wrap], [main])
 AC_CHECK_LIB([nsl], [main])
+
+# Enable HMAC if requested (--with-mhash)
+# will set HAVE_MHASH_H only
+AC_ARG_WITH([mhash],
+	[AS_HELP_STRING([--with-mhash],
+	[Enable mhash support for authentication between CC and LL nodes])],
+	[with_mhash=$withval],
+	[with_mhash=no])
+if test "$with_mhash" = "yes"; then
+	AC_CHECK_LIB([mhash], [mhash_init], ,
+		[AC_MSG_ERROR([mhash lib not found])])
+	AC_CHECK_HEADERS([mhash.h], ,
+		[AC_MSG_ERROR([mhash header not found])])
+fi
 
 # Checks for header files.
 AC_HEADER_STDC

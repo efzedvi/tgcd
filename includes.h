@@ -82,6 +82,10 @@ Disclaimer:
 #include <syslog.h>
 #endif
 
+#ifdef HAVE_MHASH_H
+#include <mhash.h>
+#endif
+
 #ifdef HAVE_ANSIDECL_H
 #include <ansidecl.h>
 #endif

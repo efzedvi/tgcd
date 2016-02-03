@@ -81,14 +81,18 @@ void print_usage(int exit_code)
 	printf(" -c, --llhost host:port     The host and port of the ListenListen node.\n");
 	printf(" -i, --interval seconds     Time interval to periodically report to LL (default: %ds).\n", TGC_TIMEOUT);
 	printf(" -k, --key number	    Poorman's encryption (0-255, default: 0, means no encryption)\n");
-	
+#ifdef HAVE_MHASH_H
+	printf(" -a, --auth string          HMAC password to authenticate a control connection with LL\n");
+#endif
 	printf("\n");
 	printf(" ListenListen mode: %s -L -p port  -q port  [-k n ] [ common options ...]\n", PACKAGE);
 	printf(" -L, --llnode		    Become a LL (ListenListen) node.\n");
 	printf(" -q, --llport number 	    The port to listen on for incomming connection from a CC node\n");
 	printf(" -p, --port number 	    The port to listen on for incomming actual client connection\n");
 	printf(" -k, --key number 	    Poorman's encryption (0-255, default: 0, means no encryption)\n");
-	
+#ifdef HAVE_MHASH_H
+	printf(" -a, --auth string          HMAC password to authenticate an incoming CC control connection\n");
+#endif
 	printf("\n");
 	printf(" PortForwarder mode: %s -F -p port -s host:port [ common options ... ]\n", PACKAGE);
 	printf(" -F, --lcnode		    Become a ListenConnect node, i.e. just a simple port forwarder\n");
@@ -171,6 +175,7 @@ int main(int argc,char *argv[])
 		{"llnode",	0, NULL, 'L'},
 		{"llport",	1, NULL, 'q'},
 		{"port",	1, NULL, 'p'},
+		{"auth",	1, NULL, 'a'},
 
 		{"lcnode",	0, NULL, 'F'},
 
@@ -272,6 +277,18 @@ int main(int argc,char *argv[])
 					exit(2);
 				}
 				tgc.key = ntemp;
+				break;
+			case 'a':
+#ifdef HAVE_MHASH_H
+				if (tgc_gen_hash(&tgc, optarg) != 0) {
+					fprintf(stderr, "Failed generating HMAC hash\n");
+					exit(2);
+				}
+#else
+				fprintf(stderr, "%s is not built with HMAC support\n",
+					program_name);
+				exit(2);
+#endif
 				break;
 			case 'n':
 				is_daemon = 0;

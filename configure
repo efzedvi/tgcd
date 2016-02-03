@@ -5113,6 +5113,10 @@ else
   with_mhash=no
 fi
 
+
+CFLAGS="$CFLAGS -I/usr/local/include"
+LDFLAGS="$LDFLAGS -L/usr/local/lib"
+
 if test "$with_mhash" = "yes"; then
 
 { $as_echo "$as_me:$LINENO: checking for mhash_init in -lmhash" >&5

@@ -32,6 +32,10 @@ AC_ARG_WITH([mhash],
 	[Enable mhash support for authentication between CC and LL nodes])],
 	[with_mhash=$withval],
 	[with_mhash=no])
+
+CFLAGS="$CFLAGS -I/usr/local/include"
+LDFLAGS="$LDFLAGS -L/usr/local/lib"
+
 if test "$with_mhash" = "yes"; then
 	AC_CHECK_LIB([mhash], [mhash_init], ,
 		[AC_MSG_ERROR([mhash lib not found])])

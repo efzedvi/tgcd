@@ -1,5 +1,5 @@
 /* tgc.c is part of tgc package
-   Copyright (C) 2014	Faraz.V (faraz@fzv.ca)
+   Copyright (C) 2016	Faraz.V (faraz@fzv.ca)
   
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -499,7 +499,7 @@ int tgc_ll(TGC *tgc)
 
 			if (tgc->node.ll.control_sd < 0) { 
 				// it's the control connection
-#ifdef HAVE_MHASH_H_
+#ifdef HAVE_MHASH_H
 				if (tgc_ll_auth_cc(tgc, sdi) != E_TGC_OK) {
 					PRINT_LOG(0, "Failed to authenticate CC control connection");
 					close_connection(&sdi);
@@ -935,9 +935,9 @@ int tgc_gen_hash(TGC *tgc, const char *passwd)
 	td = mhash_hmac_init(MHASH_SHA256, (void *)passwd, passwd_len, 
 			     mhash_get_hash_pblock(MHASH_SHA256));
 	mhash(td, hmac_msg, hmac_msg_len);
-	
-	if (!mhash_hmac_deinit(td, hmac)) {
-		PRINT_LOG(0, "Error generating HMAC hash");
+
+	if (mhash_hmac_deinit(td, hmac) != 0) {
+		PRINT_LOG(1, "Error generating HMAC hash");
 		return E_TGC_NOCANDO;
 	}
 	for (i = 0; i < mhash_get_block_size(MHASH_SHA256); i++) 
@@ -953,7 +953,6 @@ int tgc_ll_auth_cc(TGC *tgc, int socket)
 	int  hmac_len = 0;
 	char ack = TGC_COMM_ACK;
 
-
 	if (socket < 0)
 		return E_TGC_NOCANDO;
 
@@ -961,19 +960,20 @@ int tgc_ll_auth_cc(TGC *tgc, int socket)
 		return E_TGC_OK;
 
 	if ( read_data_with_timeout(socket, hmac, MAX_PATH, TGC_AUTH_TIMEOUT) <= 0) {
-                PRINT_LOG(0, "Timeout while reading HMAC from CC");
+                PRINT_LOG(1, "No HMAC received from CC");
                 return E_TGC_READ;
 	}
 
 	hmac_len = strlen(tgc->hmac);
 	if (!strncmp(tgc->hmac, hmac, hmac_len)) {
 		if ( write(socket, &ack, 1) <= 0) {
-			PRINT_LOG(0, "Error sending ACL to CC");
+			PRINT_LOG(1, "Error sending ACL to CC");
 			return E_TGC_WRITE;
 		}
 		return E_TGC_OK;
 	}
 
+	PRINT_LOG(1, "Received incorrect authentication from CC");
 	return E_TGC_NOCANDO;
 }
 
@@ -994,17 +994,17 @@ int tgc_cc_auth_ll(TGC *tgc)
 	hmac_len = strlen(tgc->hmac);
 
 	if ( write(tgc->node.cc.control_sd, tgc->hmac, hmac_len) < hmac_len) {
-                PRINT_LOG(0, "Error sending HMAC to LL");
+                PRINT_LOG(1, "Error sending HMAC to LL");
                 return E_TGC_WRITE;
         }
 
 	if (read_data_with_timeout(tgc->node.cc.control_sd, &cmd, 1, TGC_AUTH_TIMEOUT) <= 0) {
-                PRINT_LOG(0, "Timeout while reading ACK from LL");
+                PRINT_LOG(1, "No ACK received from LL");
                 return E_TGC_READ;
 	}
 
 	if (cmd != TGC_COMM_ACK) {
-                PRINT_LOG(0, "Invalid ACK from LL");
+                PRINT_LOG(1, "Invalid ACK from LL");
 		return E_TGC_NOCANDO;
 	}
 

@@ -20,6 +20,11 @@ AC_PROG_INSTALL
 AC_CHECK_LIB([wrap], [main])
 AC_CHECK_LIB([nsl], [main])
 
+# Checks for header files.
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS([fcntl.h netdb.h arpa/inet.h netinet/in.h stdlib.h string.h sys/file.h sys/ioctl.h sys/param.h sys/socket.h sys/time.h syslog.h unistd.h bits/sockaddr.h asm/types.h])
+
 # Enable HMAC if requested (--with-mhash)
 # will set HAVE_MHASH_H only
 AC_ARG_WITH([mhash],
@@ -33,11 +38,6 @@ if test "$with_mhash" = "yes"; then
 	AC_CHECK_HEADERS([mhash.h], ,
 		[AC_MSG_ERROR([mhash header not found])])
 fi
-
-# Checks for header files.
-AC_HEADER_STDC
-AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([fcntl.h netdb.h arpa/inet.h netinet/in.h stdlib.h string.h sys/file.h sys/ioctl.h sys/param.h sys/socket.h sys/time.h syslog.h unistd.h bits/sockaddr.h asm/types.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST

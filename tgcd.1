@@ -6,7 +6,7 @@ tgcd \- TCP/IP Gender Changer Daemon utility
 .I -C -s<host:port> -c<host:port> [-i<n>] [-k<n>] [-a<password>]   [<common options>]
 .br
 .B tgcd 
-.I -L -p<port> -q<port> [-k<n>] [-a<password>] [<common options>]
+.I -L -p<port> -q<port> [-k<n>] [-a<password>] [-e <interface IP>] [<common options>]
 .br
 .B tgcd 
 .I -F -p<port> -s<host:port> [<common options>]
@@ -89,6 +89,9 @@ The port to listen on for incoming connection from a CC node
 .TP 30
 .I \-p, --port number
 The port to listen of for incoming actual client connection
+.TP 30
+.I \-e, --interface <interface IP>
+The interface for incomming actual client connection (default: all interfaces)
 .TP 30
 .I \-k, --key number
 poorman's encryption (0-255, default: 0, means no encryption)

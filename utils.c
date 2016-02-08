@@ -468,7 +468,7 @@ int connect_server(char *host, int port)
 /*-----------------------------------------------------------------------------
  * open server socket!
 ------------------------------------------------------------------------------*/
-int open_server_socket(int port)
+int open_server_socket(char* host, int port)
 {
         struct sockaddr_in addr;
         int    sd=0, one=1;
@@ -477,9 +477,18 @@ int open_server_socket(int port)
         memset(&addr, 0, sizeof(addr));
         addr.sin_port = htons( port );
         addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = INADDR_ANY;
+
+	if (host && host[0]) {
+		if (inet_aton(host, &addr.sin_addr.s_addr) == 0) {
+			PRINT_LOG(1,"Failed listening on %s interface", host);
+			return -1;
+		}
+	} else {
+        	addr.sin_addr.s_addr = INADDR_ANY;
+	}
+
         sd = socket(PF_INET, SOCK_STREAM, 0);
-        if (sd == -1)  {
+        if (sd == -1) {
                 PRINT_LOG(1,"socket failed");
                 return -1;
         }

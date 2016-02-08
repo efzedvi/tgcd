@@ -415,12 +415,12 @@ int tgc_ll(TGC *tgc)
 	if (!tgc)
 		return E_TGC_IE;
 
-	if ( (tgc->sdx_accept=open_server_socket(tgc->node.ll.port)) < 0 ) {
+	if ( (tgc->sdx_accept=open_server_socket(tgc->node.ll.interface, tgc->node.ll.port)) < 0 ) {
 		PRINT_LOG(1, "Can't bind to port %d", tgc->node.ll.port);
 		return E_TGC_NOCANDO;
 	}
 
-	if ( (tgc->sdi_accept=open_server_socket(tgc->node.ll.ll_port)) < 0 ) {
+	if ( (tgc->sdi_accept=open_server_socket(NULL, tgc->node.ll.ll_port)) < 0 ) {
 		PRINT_LOG(1, "Can't bind to port %d", tgc->node.ll.ll_port);
 		return E_TGC_NOCANDO;
 	}
@@ -809,7 +809,7 @@ int tgc_pf(TGC *tgc)
 
 	signal(SIGCHLD, SIG_IGN); // to avoid zombie process
 
- 	if ( (tgc->sdi_accept=open_server_socket(tgc->node.pf.port)) < 0 ) {
+ 	if ( (tgc->sdi_accept=open_server_socket(NULL, tgc->node.pf.port)) < 0 ) {
 		PRINT_LOG(1, "Can't bind to port %d", tgc->node.pf.port);
 		return E_TGC_NOCANDO;
 	}

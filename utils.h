@@ -92,7 +92,7 @@ int 	read_data(int fd, unsigned char *buf, int len);
 int 	read_data_with_timeout(int fd, char *buf, int len, unsigned int seconds);
 int 	parse_host(char *hostport, char *host, unsigned short *port);
 int 	connect_server(char *host, int port);
-int	open_server_socket(int port);
+int	open_server_socket(char *host, int port);
 void 	close_connection(int *sd);
 RETSIGTYPE sig_cld();
 #ifdef HAVE_LIBWRAP

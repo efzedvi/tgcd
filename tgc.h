@@ -91,6 +91,7 @@ typedef struct {
 
 typedef struct {
 	unsigned short	port;
+	char 		interface[MAX_PATH];
 	unsigned short  ll_port;
 	unsigned char	protocol;
 	int		control_sd;	// control connection

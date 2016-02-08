@@ -89,6 +89,7 @@ void print_usage(int exit_code)
 	printf(" -L, --llnode		    Become a LL (ListenListen) node.\n");
 	printf(" -q, --llport number 	    The port to listen on for incomming connection from a CC node\n");
 	printf(" -p, --port number 	    The port to listen on for incomming actual client connection\n");
+	printf(" -e, --interface 	    The interface for incomming actual client connection (default: all interfaces)\n");
 	printf(" -k, --key number 	    Poorman's encryption (0-255, default: 0, means no encryption)\n");
 #ifdef HAVE_MHASH_H
 	printf(" -a, --auth string          HMAC password to authenticate an incoming CC control connection\n");
@@ -163,7 +164,7 @@ int main(int argc,char *argv[])
 	struct stat filter_stat;
 	
 	/* short options */
-	const char *short_options = "Cs:c:i:Lq:p:Fk:a:m:f:l:g:nhv";
+	const char *short_options = "Cs:c:i:Lq:p:e:Fk:a:m:f:l:g:nhv";
 	
 	/* long options */
 	const struct option long_options[] = {
@@ -175,6 +176,7 @@ int main(int argc,char *argv[])
 		{"llnode",	0, NULL, 'L'},
 		{"llport",	1, NULL, 'q'},
 		{"port",	1, NULL, 'p'},
+		{"interface",	1, NULL, 'e'},
 		{"auth",	1, NULL, 'a'},
 
 		{"lcnode",	0, NULL, 'F'},
@@ -239,6 +241,9 @@ int main(int argc,char *argv[])
 					tgc.node.pf.port = ntemp;
 				else
 					tgc.node.ll.port = ntemp;
+				break;
+			case 'e':
+				strncpy(tgc.node.ll.interface, optarg, MAX_PATH);
 				break;
 			case 'l':
 				strncpy(logfilename, optarg, MAX_PATH);		

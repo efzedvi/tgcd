@@ -479,7 +479,7 @@ int open_server_socket(char* host, int port)
         addr.sin_family = AF_INET;
 
 	if (host && host[0]) {
-		if (inet_aton(host, &addr.sin_addr.s_addr) == 0) {
+		if (inet_aton(host, (struct in_addr *) &addr.sin_addr.s_addr) == 0) {
 			PRINT_LOG(1,"Failed listening on %s interface", host);
 			return -1;
 		}

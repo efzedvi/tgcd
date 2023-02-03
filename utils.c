@@ -1,16 +1,16 @@
-/* utils.c is part of tgc package. 
+/* utils.c is part of tgc package.
    Copyright (C) 2016	Faraz.V (faraz@fzv.ca)
-  
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2, or (at your option)
    any later version.
-  
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
- 
+
 Disclaimer:
    This program is provided with no warranty of any kind, either expressed or
    implied.  It is the responsibility of the user (you) to fully research and
@@ -18,7 +18,7 @@ Disclaimer:
    either intentionally or unintentionally.
    THE AUTHOR(S) IS(ARE) NOT RESPONSIBLE FOR ANYTHING YOU DO WITH THIS PROGRAM
    or anything that happens because of your use (or misuse) of this program.
- 
+
    THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -64,7 +64,7 @@ void init_log(int dlevel, char *log_filename, int daemon)
 #ifdef DEBUG
 	if (log_filename && log_filename[0])
 		logfile = fopen(log_filename, "a");
-	else 
+	else
 		close_log();
 	
 	if (logfile)
@@ -110,11 +110,6 @@ va_dcl
 	char err_str[64];
 	struct timeval tv;
 
-	//if (!logfile) return;
-
-	if (dlevel<=0)
-		return;
-
 	err_str[0]='\0';
 
 #ifdef __STDC__
@@ -124,7 +119,7 @@ va_dcl
 	dlevel = va_arg(ap,int);
 	format_str = va_arg(ap,char *);
 #endif
-	if (dlevel <= log_level) {
+	if (dlevel > 0 && dlevel <= log_level) {
 		//now = time(NULL);
 		gettimeofday(&tv, NULL);
 		now = tv.tv_sec;
@@ -132,7 +127,7 @@ va_dcl
 		vsnprintf(log_msg, 256, format_str, ap);
 
 		if (errno && log_level>5) {
-			sprintf(err_str, " errno=%d(%s)", errno, strerror(errno)); 
+			sprintf(err_str, " errno=%d(%s)", errno, strerror(errno));
 			errno=0;
 		}
 
@@ -141,7 +136,7 @@ va_dcl
 			fflush(logfile);
 		}
 
-		if (!is_it_daemon) 
+		if (!is_it_daemon)
 			fprintf(stderr, "%s.%ld:: %s%s\n", time_buf, tv.tv_usec, log_msg, err_str);
 	}
 	va_end(ap);
@@ -167,27 +162,25 @@ va_dcl
 	char log_msg[256];
 	va_list	ap;
 
-	//if (!logfile) return;
-
-	if (dlevel<=0)
-		return;
-
 #ifdef __STDC__
 	va_start(ap, format_str);
 #else
 	va_start(ap);
 	dlevel = va_arg(ap,int);
+	func = va_arg(ap,const char *);
 	format_str = va_arg(ap,char *);
 #endif
-	vsnprintf(tmp_msg, 256, format_str, ap);
-	if (func) {
-		snprintf(log_msg, 256, "%s: %s", func, tmp_msg);
-		print_log(dlevel, log_msg);
-	} else 
-		print_log(dlevel, tmp_msg);
+
+	if (dlevel> 0) {
+		vsnprintf(tmp_msg, 256, format_str, ap);
+		if (func) {
+			snprintf(log_msg, 256, "%s: %s", func, tmp_msg);
+			print_log(dlevel, log_msg);
+		} else
+			print_log(dlevel, tmp_msg);
+	}
 
 	va_end(ap);
-
 #endif
 }
 
@@ -217,13 +210,13 @@ int big_endian(void)
 }
 
 /*------------------------------------------------------------------
-  compare 2 strings 
+  compare 2 strings
 -------------------------------------------------------------------*/
 int strequal(char *s1, char *s2)
 {
-	if (!s1 || !s2) 
+	if (!s1 || !s2)
 		return(0);
-	    
+
 	return(strcasecmp(s1,s2)==0);
 }
 
@@ -267,7 +260,7 @@ void string_replace(char *s,char old_str, char new_str)
 int strnum(char *s)
 {
 	while (*s) {
-		if (!isdigit(*s)) 
+		if (!isdigit(*s))
 			return 0;
 		s++;
 	}
@@ -321,12 +314,12 @@ int xioctl(int fd, int request, void *argp)
 {
 	int	rv;
 
-	do 
+	do
 		rv = ioctl(fd, request, argp);
 	while (rv==-1  &&  EINTR==errno);
 
 #ifdef DEBUG
-	if (rv == -1) 
+	if (rv == -1)
 		print_log(3, "ioctl error");
 #endif
 
@@ -522,7 +515,7 @@ int	peer_ok(char *prog, int sd)
 
 	request_init(&request, RQ_DAEMON, prog, RQ_FILE, sd, 0);
 	fromhost(&request);
-	if (!hosts_access(&request)) 
+	if (!hosts_access(&request))
 		return 0;
 	else
 		return 1;
@@ -542,7 +535,7 @@ int accept_connection(int sd_accept, struct sockaddr_in *addr, socklen_t *in_add
 	
 	sd = accept(sd_accept, (struct sockaddr *) addr, (socklen_t *)in_addrlen);
 
-	if (sd==-1) 
+	if (sd==-1)
 		PRINT_LOG(1, "Error accepting new connection!");
 
 #ifdef HAVE_LIBWRAP

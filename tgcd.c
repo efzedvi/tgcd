@@ -1,11 +1,11 @@
 /* tgcd.c is part of tgc package.
    Copyright (C) 2016	Faraz.V (faraz@fzv.ca)
-  
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2, or (at your option)
    any later version.
-  
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -48,7 +48,7 @@ int	timeout = 250;
 const char *program_name;
 
 #ifdef HAVE_FORK
-// We try to be a daemon by default 
+// We try to be a daemon by default
 int	is_daemon = 1;
 #else
 int	is_daemon = 0;
@@ -145,7 +145,7 @@ void init_server(void)
 	signal(SIGQUIT, shutdown_server);
 	signal(SIGHUP, shutdown_server);
 
-	if (tgc.method==TGC_METHOD_FORK) 
+	if (tgc.method==TGC_METHOD_FORK)
 		signal(SIGCHLD, sig_cld);
 }
 
@@ -315,7 +315,7 @@ int main(int argc,char *argv[])
 	} while (next_option != -1);
 	
 	/* if there are non-option parameters printn usage and exit! */
-	if (optind<argc || argc<=1) 
+	if (optind<argc || argc<=1)
 		print_usage(1);
 
 	init_log(loglevel, logfilename, is_daemon);

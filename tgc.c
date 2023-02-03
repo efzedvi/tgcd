@@ -1,11 +1,11 @@
 /* tgc.c is part of tgc package
    Copyright (C) 2016	Faraz.V (faraz@fzv.ca)
-  
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2, or (at your option)
    any later version.
-  
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -18,7 +18,7 @@ Disclaimer:
    either intentionally or unintentionally.
    THE AUTHOR(S) IS(ARE) NOT RESPONSIBLE FOR ANYTHING YOU DO WITH THIS PROGRAM
    or anything that happens because of your use (or misuse) of this program.
-  
+
    THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -30,7 +30,7 @@ Disclaimer:
    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
    OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
    SUCH DAMAGE.
-  
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -134,7 +134,7 @@ int tgc_read(int sd, char *cmd)
 		return E_TGC_READ;
 	}
 
-	if (!rc) 
+	if (!rc)
 		return E_TGC_END;
 	
 	return E_TGC_OK;
@@ -156,7 +156,7 @@ int tgc_add_queue(socket_queue **sq, int sd)
 	}
 	tq->sd = sd;
 
-	if (*sq) 
+	if (*sq)
 		tq->next = (*sq);
 	else // null
 		tq->next = NULL;
@@ -292,7 +292,7 @@ void do_abort(void )
         PRINT_LOG(1,"Aborted.");
         exit(1);
 }
- 
+
 /*-----------------------------------------------------------------------------
  * Transfer data from one socket to another
 ------------------------------------------------------------------------------*/
@@ -306,7 +306,7 @@ int tgc_rxtx(int rx_sd, int tx_sd, unsigned char *buf, unsigned char key)
 	if ( (nread=read(rx_sd, buf, TGC_BUFFER_SIZE)) == 0 ) {
 		PRINT_LOG(5, "End of data");
 		return E_TGC_END;
-	} 
+	}
 	
 	if (nread < 0) {
 		PRINT_LOG(3, "Error reading from socket");
@@ -342,8 +342,8 @@ int tgc_pump(int sdi, int sdx, unsigned char *buf, unsigned char key)
 	FD_SET(sdx, &rfds);
 
 	while (sdi>=0 && sdx>=0) {
-		reads = rfds; 
-		if ( select(FD_SETSIZE, &reads, NULL, NULL, NULL) < 0 ) 
+		reads = rfds;
+		if ( select(FD_SETSIZE, &reads, NULL, NULL, NULL) < 0 )
 			continue;
 
 		if (FD_ISSET(sdi, &reads)) {
@@ -373,7 +373,7 @@ int tgc_check_filter(TGC *tgc, const char *ip)
 	int	ec=0;
 	char 	cmd[MAX_PATH + 1];
 
-	if (!tgc || !ip) 
+	if (!tgc || !ip)
 		return 0;
 	if (!strlen(tgc->filter))
 		return 1;
@@ -436,11 +436,11 @@ int tgc_ll(TGC *tgc)
 
 	while(1) {
 		reads = rfds;
-		if ( select(FD_SETSIZE, &reads, NULL, NULL, NULL) < 0 ) 
+		if ( select(FD_SETSIZE, &reads, NULL, NULL, NULL) < 0 )
 			continue;
 
 		if (FD_ISSET(tgc->sdx_accept, &reads)) { // incoming client connection
-			sdx = accept_connection(tgc->sdx_accept, (struct sockaddr_in *)&addr, 
+			sdx = accept_connection(tgc->sdx_accept, (struct sockaddr_in *)&addr,
 				       		(socklen_t *)&in_addrlen);
 
 			if (sdx==-1) {
@@ -450,7 +450,7 @@ int tgc_ll(TGC *tgc)
 				continue; //break; // exit
 			}
 
-			if (tgc->node.ll.control_sd<0) { 
+			if (tgc->node.ll.control_sd<0) {
 				//client came in while there is no control connection, so we close it
 				PRINT_LOG(3, "rejecting client connection before control connection received ");
 				close_connection(&sdx);
@@ -473,12 +473,12 @@ int tgc_ll(TGC *tgc)
 					return E_TGC_NOCANDO;
 				}
 				PRINT_LOG(5, "client connection added to the queue");
-		 	} else 
+		 	} else
 				close_connection(&sdx); // couldn't ask CC for a new connection, close the client
-		} 
+		}
 		
 		if (FD_ISSET(tgc->sdi_accept, &reads)) { // from CC
-			sdi = accept_connection(tgc->sdi_accept, (struct sockaddr_in *)&addr, 
+			sdi = accept_connection(tgc->sdi_accept, (struct sockaddr_in *)&addr,
 				       (socklen_t *)&in_addrlen);
 
 			if (sdi==-1) {
@@ -497,7 +497,7 @@ int tgc_ll(TGC *tgc)
                                 continue;
 			}
 
-			if (tgc->node.ll.control_sd < 0) { 
+			if (tgc->node.ll.control_sd < 0) {
 				// it's the control connection
 #ifdef HAVE_MHASH_H
 				if (tgc_ll_auth_cc(tgc, sdi) != E_TGC_OK) {
@@ -524,7 +524,7 @@ int tgc_ll(TGC *tgc)
 							if (!tgc_add_list( &(tgc->pairs), sdi, sdx)) {
 								FD_SET(sdi, &rfds);
 								FD_SET(sdx, &rfds);
-							} 
+							}
 						} else {
 #ifdef HAVE_FORK
 							// FORK
@@ -543,7 +543,7 @@ int tgc_ll(TGC *tgc)
 					}
 				}
 			}
-		} 
+		}
 		
 		if (tgc->node.ll.control_sd>=0 && FD_ISSET(tgc->node.ll.control_sd, &reads)) {
 			close_control = 0;
@@ -584,7 +584,7 @@ int tgc_ll(TGC *tgc)
 
 		// pump the data for each and every connection pairs
 		if (tgc->method==TGC_METHOD_SELECT) {
-			conn = tgc->pairs; 
+			conn = tgc->pairs;
 			while (conn) {
 				if (FD_ISSET(conn->sdi , &reads)) { // from CC?
 					if ( (rc=tgc_rxtx(conn->sdi, conn->sdx, tgc->buf, tgc->key)) < 0 ) {
@@ -655,7 +655,7 @@ int tgc_cc(TGC *tgc)
 		}
 #ifdef HAVE_MHASH_H
 		if ( tgc_cc_auth_ll(tgc) != E_TGC_OK ) {
-			PRINT_LOG(0, "HMAC authentication with LL (%s:%d) failed", 
+			PRINT_LOG(0, "HMAC authentication with LL (%s:%d) failed",
 				  LL_HOST, CC_LL_PORT);
 			close_connection( &(tgc->node.cc.control_sd) );
 			continue;
@@ -674,7 +674,7 @@ int tgc_cc(TGC *tgc)
 				continue;
 			}
 			
-			if (rc==0 || (last_time+tgc->node.cc.interval)<time(NULL)) { 
+			if (rc==0 || (last_time+tgc->node.cc.interval)<time(NULL)) {
 				//either timed out or it's time to send ping again
 				PRINT_LOG(2, "Sending ping to LL");
 				if (tgc_send(tgc->node.cc.control_sd, TGC_COMM_PING) < 0) {
@@ -701,7 +701,7 @@ int tgc_cc(TGC *tgc)
 							if ( (sdx=connect_server(CC_SERVER, CC_SERVER_PORT))<0 ) {
 								PRINT_LOG(2, "failed connecting to server to %s:%d", CC_SERVER, CC_SERVER_PORT);
 								tgc_send(tgc->node.cc.control_sd, TGC_COMM_CLOSE);
-								continue; 
+								continue;
 							}
 
 							// now connect to LL
@@ -719,7 +719,7 @@ int tgc_cc(TGC *tgc)
 									if (!tgc_add_list( &(tgc->pairs), sdi, sdx)) {
 										FD_SET(sdi, &rfds);
 										FD_SET(sdx, &rfds);
-									} 
+									}
 								} else { // FORK
 #ifdef HAVE_FORK
 									if (fork()==0) { // child
@@ -756,7 +756,7 @@ int tgc_cc(TGC *tgc)
 
 			// pump the data for each and every connection pairs
 			if (tgc->method==TGC_METHOD_SELECT) {
-				conn = tgc->pairs; 
+				conn = tgc->pairs;
 				while (conn) {
 					
 					if (FD_ISSET(conn->sdi , &reads)) { // from CC?
@@ -822,12 +822,12 @@ int tgc_pf(TGC *tgc)
 	while (1) {
 
 		reads = rfds;
-		if ( select(FD_SETSIZE, &reads, NULL, NULL, NULL) < 0 ) 
+		if ( select(FD_SETSIZE, &reads, NULL, NULL, NULL) < 0 )
 			continue;
 
 		if (FD_ISSET(tgc->sdi_accept, &reads)) {
 		
-			sdi = accept_connection(tgc->sdi_accept, (struct sockaddr_in *) &addr, 
+			sdi = accept_connection(tgc->sdi_accept, (struct sockaddr_in *) &addr,
 					                     (socklen_t *)&in_addrlen);
 
 			if (sdi==-1) {
@@ -932,7 +932,7 @@ int tgc_gen_hash(TGC *tgc, const char *passwd)
 	passwd_len = strlen(passwd);
 	hmac_msg_len = strlen(hmac_msg);
 
-	td = mhash_hmac_init(MHASH_SHA256, (void *)passwd, passwd_len, 
+	td = mhash_hmac_init(MHASH_SHA256, (void *)passwd, passwd_len,
 			     mhash_get_hash_pblock(MHASH_SHA256));
 	mhash(td, hmac_msg, hmac_msg_len);
 
@@ -940,7 +940,7 @@ int tgc_gen_hash(TGC *tgc, const char *passwd)
 		PRINT_LOG(1, "Error generating HMAC hash");
 		return E_TGC_NOCANDO;
 	}
-	for (i = 0; i < mhash_get_block_size(MHASH_SHA256); i++) 
+	for (i = 0; i < mhash_get_block_size(MHASH_SHA256); i++)
 		snprintf(tgc->hmac+i*2, MAX_PATH-2*i, "%.2x", hmac[i]);
 	tgc->hmac[i*2] = '\0';
 
@@ -956,7 +956,7 @@ int tgc_ll_auth_cc(TGC *tgc, int socket)
 	if (socket < 0)
 		return E_TGC_NOCANDO;
 
-	if (!tgc->hmac || !tgc->hmac[0]) 
+	if (!tgc->hmac || !tgc->hmac[0])
 		return E_TGC_OK;
 
 	if ( read_data_with_timeout(socket, hmac, MAX_PATH, TGC_AUTH_TIMEOUT) <= 0) {
@@ -983,12 +983,12 @@ int tgc_cc_auth_ll(TGC *tgc)
 	char cmd = '\0';
 
 
-	if (tgc->node.cc.control_sd < 0) 
+	if (tgc->node.cc.control_sd < 0)
 		return E_TGC_NOCANDO;
 
 	// no hmac? meh we pretend we don't have to send it then.
 	// ... which may get LL pissed off and close the connection on us
-	if (!tgc->hmac || !tgc->hmac[0]) 
+	if (!tgc->hmac || !tgc->hmac[0])
 		return E_TGC_OK;
 
 	hmac_len = strlen(tgc->hmac);
@@ -1015,7 +1015,7 @@ int tgc_cc_auth_ll(TGC *tgc)
 /*-----------------------------------------------------------------------------
  * Decide what to do!
 ------------------------------------------------------------------------------*/
-int tgc_run(TGC *tgc) 
+int tgc_run(TGC *tgc)
 {
 	int rc;
 

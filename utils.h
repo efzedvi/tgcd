@@ -1,16 +1,16 @@
 /* utils.h is part of tgc package
    Copyright (C) 2008	Faraz.V (faraz@fzv.ca)
-  
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2, or (at your option)
    any later version.
-  
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
- 
+
 Disclaimer:
    This program is provided with no warranty of any kind, either expressed or
    implied.  It is the responsibility of the user (you) to fully research and
@@ -18,7 +18,7 @@ Disclaimer:
    either intentionally or unintentionally.
    THE AUTHOR(S) IS(ARE) NOT RESPONSIBLE FOR ANYTHING YOU DO WITH THIS PROGRAM
    or anything that happens because of your use (or misuse) of this program.
- 
+
    THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -43,7 +43,7 @@ Disclaimer:
 
 #ifdef __cplusplus
   extern "C" {
-#endif 
+#endif
 
 #ifndef MAX_PATH
 #define  MAX_PATH	254
@@ -102,7 +102,7 @@ int 	accept_connection(int sd_accept, struct sockaddr_in *addr, socklen_t *in_ad
 
 #ifdef __cplusplus
   }
-#endif 
+#endif
 
 #endif
 

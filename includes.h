@@ -1,11 +1,11 @@
-/*  
+/*
    Copyright (C) 2016	Faraz.V (faraz@fzv.ca)
-  
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2, or (at your option)
    any later version.
-  
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -46,12 +46,12 @@ Disclaimer:
 #include <time.h>
 #include <signal.h>
 #include <errno.h>
-#include <fcntl.h> 
+#include <fcntl.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #ifdef HAVE_ASM_TYPES_H
-#include <asm/types.h> 
+#include <asm/types.h>
 #endif
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -65,7 +65,7 @@ Disclaimer:
 #include <sys/socket.h>
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
-#endif 
+#endif
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
@@ -104,7 +104,7 @@ Disclaimer:
 
 #ifndef SIGCLD
 #define SIGCLD SIGCHLD
-#endif 
+#endif
 
 #ifndef GETWD_CACHE
 #define GETWD_CACHE 0

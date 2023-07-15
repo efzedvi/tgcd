@@ -91,10 +91,11 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 	NOTE:  This software has only been tested on the following platforms:
 
-	Linux 2.2.x (x86), 2.4.x (x86), 2.6.x (x86, ARM9, AVR32), Cygwin (1.5.x), NetBSD 2.1.0
+	Linux 2.2.x (x86), 2.4.x (x86), 2.6.x, 4.x, 5.15.x (x86, AVR32, ARM, aarch64), Cygwin (1.5.x), NetBSD 2.1.0, FreeBSD 11.0, 12.0
 
-	Please feel free to send us your comments or any patches you may have to get tgc 
+	There has also been reports received about successful tests on: FreeBSD 13.1, 13.2
+
+	Please feel free to send us your comments or any patches you may have to get tgcd 
 	working on other platforms.
-
 
 
